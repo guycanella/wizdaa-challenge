@@ -1,0 +1,25 @@
+{
+  "name": "mock-hcm",
+  "version": "1.0.0",
+  "description": "Mock HCM server for ExampleHR Time-Off Microservice testing",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "test": "jest",
+    "start:prod": "node dist/server.js"
+  },
+  "dependencies": {
+    "fastify": "^5.3.3",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.15.3",
+    "jest": "^30.3.0",
+    "ts-jest": "^29.4.9",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}
