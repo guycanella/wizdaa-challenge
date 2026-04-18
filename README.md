@@ -83,6 +83,11 @@ npm start
 # Runs on http://localhost:3001
 ```
 
+> **Note:** If port 3001 is in use (e.g., by Docker), start on another port:
+> ```bash
+> HCM_PORT=3002 npm start
+> ```
+
 Then in a separate terminal, start the NestJS service:
 
 ```bash
@@ -92,9 +97,14 @@ npm run start:dev
 # Swagger docs at http://localhost:3000/api/docs
 ```
 
-### 4. Seed test data
+> If you changed the HCM port, tell the NestJS service:
+> ```bash
+> HCM_BASE_URL=http://localhost:3002 npm run start:dev
+> ```
 
-With both servers running, seed the mock HCM with sample balances:
+### 4. Seed test data and sync
+
+With both servers running, seed the mock HCM with sample balances (adjust port if needed):
 
 ```bash
 curl -X POST http://localhost:3001/hcm/simulate/seed \
@@ -106,21 +116,43 @@ curl -X POST http://localhost:3001/hcm/simulate/seed \
   ]'
 ```
 
-Then try creating a request:
+Then trigger a batch sync so the NestJS service pulls the balances from the HCM into its local cache:
 
 ```bash
-curl -X POST http://localhost:3000/api/v1/requests \
-  -H "Content-Type: application/json" \
-  -d '{
-    "employeeId": "EMP-001",
-    "locationId": "LOC-BR-SP",
-    "leaveType": "VACATION",
-    "startDate": "2026-05-01",
-    "endDate": "2026-05-05",
-    "days": 3,
-    "reason": "Family trip"
-  }'
+curl -X POST http://localhost:3000/api/v1/sync
 ```
+
+You should see `"recordsProcessed": 3` in the response.
+
+### 5. Test via Swagger UI
+
+Open **http://localhost:3000/api/docs** in your browser. The Swagger UI shows all endpoints organized by tag (balances, requests, sync).
+
+**Walkthrough — full request lifecycle:**
+
+1. **Check balance** — expand `GET /api/v1/balances/{employeeId}`, click "Try it out", enter `EMP-001`, click "Execute". You should see the balance with `total: 20`.
+
+2. **Create a request** — expand `POST /api/v1/requests`, click "Try it out", paste this body and click "Execute":
+   ```json
+   {
+     "employeeId": "EMP-001",
+     "locationId": "LOC-BR-SP",
+     "leaveType": "VACATION",
+     "startDate": "2026-05-01",
+     "endDate": "2026-05-05",
+     "days": 3,
+     "reason": "Family trip"
+   }
+   ```
+   Copy the `id` from the response (you'll need it next).
+
+3. **Check balance again** — repeat step 1. You should now see `pending: 3` and `available: 17`.
+
+4. **Approve the request** — expand `PATCH /api/v1/requests/{id}/approve`, click "Try it out", paste the request ID, use `{}` as body, click "Execute". The response should show `status: "CONFIRMED"` and a `hcmReferenceId`.
+
+5. **Verify final balance** — repeat step 1. You should see `used: 3`, `pending: 0`, `available: 17`.
+
+6. **Cancel the request** (optional) — expand `PATCH /api/v1/requests/{id}/cancel`, paste the same ID, click "Execute". The balance will be restored to `available: 20`.
 
 ## Architecture Overview
 
