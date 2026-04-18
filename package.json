@@ -1,0 +1,10 @@
+{
+    "name": "wizdaa-challenge",
+    "private": true,
+    "scripts": {
+      "test": "cd mock-hcm && npx jest && cd ../time-off-service && npx jest",
+      "test:mock": "cd mock-hcm && npx jest --verbose",
+      "test:service": "cd time-off-service && npx jest --verbose",
+      "test:all": "cd mock-hcm && npx jest --verbose && cd ../time-off-service && npx jest --verbose"
+    }
+  }
